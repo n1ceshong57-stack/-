@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>기술마켓 안내 AI 상담사 시범</title>
+<style>
+body { font-family: Arial, sans-serif; background: #f4f6f8; margin: 0; padding: 0; }
+.container { max-width: 760px; margin: 40px auto; background: white; border-radius: 12px; box-shadow: 0 4px 14px rgba(0,0,0,0.12); padding: 24px; }
+h1 { font-size: 24px; margin-bottom: 8px; }
+.desc { color: #555; font-size: 14px; margin-bottom: 20px; line-height: 1.6; }
+.chat-box { border: 1px solid #ddd; border-radius: 8px; height: 360px; overflow-y: auto; padding: 16px; background: #fafafa; margin-bottom: 16px; }
+.message { margin: 10px 0; line-height: 1.5; }
+.user { text-align: right; color: #1a5fb4; }
+.bot { text-align: left; color: #222; }
+input { width: 78%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+button { padding: 10px 16px; border: none; border-radius: 6px; background: #1a5fb4; color: white; font-size: 14px; cursor: pointer; }
+.quick { margin-top: 12px; }
+.quick button { background: #e9eef7; color: #1a5fb4; margin: 4px; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>기술마켓 안내 AI 상담사 시범</h1>
+<div class="desc">
+기술마켓 관련 반복 문의에 대응하기 위한 FAQ 기반 상담 지원 도구 예시입니다.<br>
+실제 운영 전에는 공단 공식 안내자료 및 담당부서 검토를 통해 답변 내용을 보완해야 합니다.
+</div>
+<div class="chat-box" id="chatBox">
+<div class="message bot"><b>상담사:</b> 안녕하세요. 기술마켓 관련 기본 문의를 안내드립니다. 궁금한 내용을 입력해주세요.</div>
+</div>
+<input type="text" id="userInput" placeholder="예: 기술마켓이 무엇인가요?">
+<button onclick="sendMessage()">질문하기</button>
+<div class="quick">
+<button onclick="quickAsk('기술마켓이 무엇인가요?')">기술마켓이 무엇인가요?</button>
+<button onclick="quickAsk('특정공법 심의와 무슨 관련이 있나요?')">특정공법 심의와 관련</button>
+<button onclick="quickAsk('어디서 신청하나요?')">신청 방법</button>
+<button onclick="quickAsk('원가계산서는 어떤 자료가 필요한가요?')">원가계산서</button>
+<button onclick="quickAsk('담당자 연락처를 알고 싶습니다')">문의처</button>
+</div>
+</div>
+<script>
+const faq = [
+{ keywords: ["기술마켓", "무엇", "뭔가", "개요"], answer: "기술마켓은 중소기업의 우수 기술과 제품이 공공기관에 활용될 수 있도록 지원하는 플랫폼입니다. 등록을 통해 공공시장 진입 기회를 확대할 수 있습니다." },
+{ keywords: ["특정공법", "심의", "관련", "왜"], answer: "특정공법 심의 절차 변경에 따라 기술마켓 등록 기술의 활용이 확대되고 있어, 특정공법 심의를 통과한 업체를 대상으로 관련 내용을 안내드리고 있습니다." },
+{ keywords: ["신청", "등록", "어디", "방법"], answer: "기술마켓 등록은 중소기업 기술마켓 포털 또는 공단 안내자료를 통해 절차를 확인할 수 있습니다. 세부 신청 방법은 공단 홈페이지의 기술마켓 안내자료를 참고하시기 바랍니다." },
+{ keywords: ["원가계산서", "공인기관", "자료", "서류"], answer: "원가계산서는 자체 작성 자료가 아닌 공인기관에서 발급한 자료가 필요할 수 있습니다. 제출 전 발급기관 및 자료 형식을 확인하는 것이 필요합니다." },
+{ keywords: ["문의", "연락처", "담당자", "전화"], answer: "세부 문의는 국가철도공단 담당부서 또는 기술마켓 관련 안내자료에 기재된 문의처를 통해 확인하실 수 있습니다." },
+{ keywords: ["혜택", "장점", "이점"], answer: "기술마켓 등록을 통해 공공기관 활용 가능성을 높이고 기술 홍보 및 공공시장 진입 기회를 확대할 수 있습니다. 구체적인 적용 여부는 관련 절차와 기준에 따라 확인이 필요합니다." }
+];
+
+function addMessage(sender, text, cls) {
+const chatBox = document.getElementById("chatBox");
+const div = document.createElement("div");
+div.className = "message " + cls;
+div.innerHTML = "<b>" + sender + ":</b> " + text;
+chatBox.appendChild(div);
+chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function getAnswer(question) {
+const q = question.replace(/\s/g, "").toLowerCase();
+let best = null;
+let score = 0;
+faq.forEach(item => {
+let current = 0;
+item.keywords.forEach(k => { if (q.includes(k.toLowerCase())) current++; });
+if (current > score) { score = current; best = item.answer; }
+});
+if (best) return best;
+return "해당 문의는 기본 FAQ에 포함되어 있지 않습니다. 담당부서 확인이 필요합니다. 기술마켓 안내자료 또는 담당자 문의를 통해 추가 확인 부탁드립니다.";
+}
+
+function sendMessage() {
+const input = document.getElementById("userInput");
+const question = input.value.trim();
+if (!question) return;
+addMessage("사용자", question, "user");
+addMessage("상담사", getAnswer(question), "bot");
+input.value = "";
+}
+
+function quickAsk(text) {
+document.getElementById("userInput").value = text;
+sendMessage();
+}
+
+document.getElementById("userInput").addEventListener("keydown", function(e) {
+if (e.key === "Enter") sendMessage();
+});
+</script>
+</body>
+</html>
